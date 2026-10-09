@@ -6,42 +6,64 @@ const notesList = document.querySelector("#notes-list");
 const errorMessage = document.querySelector("#error-message");
 const noteCount = document.querySelector("#note-count");
 
-// 2. Create an array to store notes
+// 2. Store notes in an array
 let notes = [];
 
 
-// 3. Render notes on the page
+// 3. Update the note count
+function updateNoteCount() {
+    const total = notes.length;
+
+    if (total === 0) {
+        noteCount.textContent = "You have no notes yet.";
+    } else if (total === 1) {
+        noteCount.textContent = "You have 1 note.";
+    } else {
+        noteCount.textContent = `You have ${total} notes.`;
+    }
+}
+
+
+// 4. Render notes on the page
 function render() {
-    // Clear the existing list before rebuilding it
+    // Clear the existing list
     notesList.replaceChildren();
 
-    // Create an HTML element for every note
+    // Create a card for each note
     notes.forEach(function (note) {
         const listItem = document.createElement("li");
 
-        // Add the category class for styling
         listItem.classList.add(`category-${note.category}`);
 
-        // Display the note text safely
+        // Note text
         const noteText = document.createElement("p");
         noteText.textContent = note.text;
 
-        // Display the category
+        // Category label
         const categoryLabel = document.createElement("span");
         categoryLabel.classList.add("note-category");
         categoryLabel.textContent = note.category;
 
-        // Display the creation date and time
+        // Creation date
         const dateLabel = document.createElement("small");
         dateLabel.classList.add("note-date");
         dateLabel.textContent = `Created: ${note.createdAt}`;
 
-        // Create a Delete button
+        // Delete button
         const deleteButton = document.createElement("button");
         deleteButton.classList.add("delete-btn");
         deleteButton.textContent = "Delete";
 
-        // Assemble the note card
+        // Remove this particular note when clicked
+        deleteButton.addEventListener("click", function () {
+            notes = notes.filter(function (item) {
+                return item.id !== note.id;
+            });
+
+            render();
+        });
+
+        // Assemble the card
         listItem.append(
             noteText,
             categoryLabel,
@@ -49,21 +71,34 @@ function render() {
             deleteButton
         );
 
-        // Add the card to the notes list
         notesList.appendChild(listItem);
     });
+
+    // Refresh the count after rendering
+    updateNoteCount();
 }
 
 
-// 4. Handle form submission
+// 5. Handle form submission
 noteForm.addEventListener("submit", function (event) {
-    // Prevent the browser from refreshing the page
     event.preventDefault();
 
-    // Get the text entered by the user
     const text = noteInput.value.trim();
 
-    // Create a new note object
+    // Validate empty input
+    if (text.length === 0) {
+        errorMessage.textContent = "Please type a note first.";
+        return;
+    }
+
+    // Validate the 200-character limit
+    if (text.length > 200) {
+        errorMessage.textContent =
+            "Notes must be 200 characters or fewer.";
+        return;
+    }
+
+    // Create a new note
     const newNote = {
         id: Date.now(),
         text: text,
@@ -71,19 +106,17 @@ noteForm.addEventListener("submit", function (event) {
         createdAt: new Date().toLocaleString()
     };
 
-    // Add the note to the array
+    // Add the note
     notes.push(newNote);
+
+    // Clear the error and input
+    errorMessage.textContent = "";
+    noteInput.value = "";
 
     // Update the page
     render();
-
-    // Clear the input
-    noteInput.value = "";
-
-    // Remove any previous error message
-    errorMessage.textContent = "";
 });
 
 
-// 5. Display the initial state
+// 6. Render the initial state
 render();
